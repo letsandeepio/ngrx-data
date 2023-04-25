@@ -6,7 +6,7 @@ import {
 } from "@angular/router";
 import { Observable } from "rxjs";
 import { CourseEntityService } from "./course-entity.services";
-import { map } from "rxjs/operators";
+import { filter, first, map, tap } from "rxjs/operators";
 
 @Injectable()
 export class CourseResolver implements Resolve<boolean> {
@@ -16,6 +16,14 @@ export class CourseResolver implements Resolve<boolean> {
     route: ActivatedRouteSnapshot,
     state: RouterStateSnapshot
   ): boolean | Observable<boolean> | Promise<boolean> {
-    return this.courseService.getAll().pipe(map((courses) => !!courses));
+    return this.courseService.loaded$.pipe(
+      tap((loaded) => {
+        if (!loaded) {
+          this.courseService.getAll();
+        }
+      }),
+      filter((loaded) => !!loaded),
+      first()
+    );
   }
 }
